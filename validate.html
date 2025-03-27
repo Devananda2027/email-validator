@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iValidate | Email Validator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="validate.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            text-align: center;
+            z-index: 10;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+        nav {
+            margin: 20px;
+            text-align: center;
+        }
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 1.1rem;
+            padding: 5px 15px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        nav a:hover {
+            background: #ff5e62;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            backdrop-filter: blur(10px);
+            margin-top: 100px;
+            animation: fadeIn 1s ease-in-out;
+        }
+        .container input, .container textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 25px;
+            border: 1px solid #ddd;
+            margin: 10px 0;
+            font-size: 1rem;
+        }
+        .container button {
+            background: linear-gradient(135deg, #ff9966, #ff5e62);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            cursor: pointer;
+            border-radius: 25px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+        .container button:hover {
+            transform: scale(1.1);
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            background: white;
+            color: black;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #ff5e62;
+            color: white;
+        }
+        td {
+            text-align: center;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1><i class="fas fa-envelope"></i> iValidate - Email Validator</h1>
+    </header>
+
+    <nav>
+        <a href="#">Home</a>
+        <a href="#">Contact Us</a>
+    </nav>
+
+    <main>
+        <div class="container">
+            <h2><i class="fas fa-check-circle"></i> Enter your Email to Validate</h2>
+            <form id="emailForm">
+                <input placeholder="Enter your Email" type="text" id="username" name="email" required>
+                <button type="submit"><i class="fas fa-search"></i> Submit</button>
+            </form>
+        </div>
+
+        <div class="container">
+            <h2><i class="fas fa-pen"></i> Enter the Main Email Content</h2>
+            <textarea placeholder="Write your email content here..." id="emailContent" rows="6"></textarea>
+            <button id="checkContentBtn"><i class="fas fa-check"></i> Check Grammar and Enhance</button>
+        </div>
+
+        <div class="container">
+            <h2><i class="fas fa-tachometer-alt"></i> Your Results</h2>
+            <div id="resultCont">
+                <table id="resultTable">
+                    <thead>
+                        <tr>
+                            <th>Property</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.getElementById("emailForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+            let email = document.getElementById("username").value;
+            if (!email) {
+                alert("Please enter an email");
+                return;
+            }
+
+            let key = "ema_live_AYBrj6e6EWuLjk0U9kpkNmp0qFHQd8NtVSeYQSGP";
+            let url = `https://api.emailvalidation.io/v1/info?apikey=${key}&email=${email}`;
+
+            try {
+                let res = await fetch(url);
+                if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+                let result = await res.json();
+                let tbody = document.querySelector("#resultTable tbody");
+                tbody.innerHTML = ""; // Clear previous results
+                
+                // Reorder so "state" comes first
+                const orderedResult = { state: result.state, ...result };
+                
+                // Loop through the ordered result keys and create rows
+                Object.keys(orderedResult).forEach(key => {
+                    let row = `<tr><td>${key}</td><td>${orderedResult[key]}</td></tr>`;
+                    tbody.innerHTML += row;
+                });
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                document.querySelector("#resultTable tbody").innerHTML = `<tr><td colspan="2" style="color: red;">Error fetching data. Please try again.</td></tr>`;
+            }
+        });
+
+        document.getElementById("checkContentBtn").addEventListener("click", async function() {
+            let emailContent = document.getElementById("emailContent").value;
+            if (!emailContent) {
+                alert("Please enter email content to check.");
+                return;
+            }
+
+            let url = `https://api.languagetool.org/v2/check`;
+            let data = {
+                text: emailContent,
+                language: "en"
+            };
+
+            try {
+                let res = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                });
+                let result = await res.json();
+
+                let enhancedText = emailContent;
+                if (result.matches.length > 0) {
+                    result.matches.forEach(match => {
+                        enhancedText = enhancedText.replace(match.context.text.slice(match.offset, match.offset + match.length), match.replacements[0]?.value || '');
+                    });
+                }
+
+                document.getElementById("emailContent").value = enhancedText;
+                alert("Content checked! Suggestions applied and corrections made.");
+            } catch (error) {
+                console.error("Error checking grammar:", error);
+                alert("Error checking content. Please try again.");
+            }
+        });
+    </script>
+</body>
+</html>
+
